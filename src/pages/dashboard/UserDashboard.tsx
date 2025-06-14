@@ -17,6 +17,7 @@ import {
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import OrderManagement from '../../components/orders/OrderManagement';
+import UserProfile from './UserProfile';
 
 type Language = 'en' | 'fr' | 'rw';
 
@@ -122,7 +123,7 @@ const UserDashboard: React.FC = () => {
 
           <Routes>
             <Route path="/" element={<OrderManagement />} />
-            <Route path="/profile" element={<div>Profile Content</div>} />
+            <Route path="/profile" element={<UserProfile />} />
             <Route path="/addresses" element={<div>Addresses Content</div>} />
             <Route path="/payment" element={<div>Payment Methods Content</div>} />
             <Route path="/wishlist" element={<div>Wishlist Content</div>} />

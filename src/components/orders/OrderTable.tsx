@@ -1,7 +1,17 @@
 import React, { useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { formatCurrency } from '../../utils/currency';
-import { Package, Truck, CheckCircle, Clock, XCircle, MoreHorizontal, Upload } from 'lucide-react';
+import {
+  Package,
+  Truck,
+  CheckCircle,
+  Clock,
+  XCircle,
+  MoreHorizontal,
+  Upload,
+  FileText,
+  Eye
+} from 'lucide-react';
 import clsx from 'clsx';
 import {
   DropdownMenu,
@@ -11,36 +21,51 @@ import {
 } from '../ui/dropdown-menu'; // Assuming you have a reusable dropdown menu component
 
 interface OrderItem {
-  id: string;
+  productId: string;
   name: string;
   image: string;
   quantity: number;
   price: number;
+  size?: string;
+  color?: string;
 }
 
 interface Order {
-  id: string;
-  date: string;
-  status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
-  paymentStatus: 'pending' | 'verified' | 'rejected';
-  total: number;
+  _id: string; // Changed from id to _id to match MongoDB
+  userId: string;
+  clientName: string;
+  clientEmail: string;
+  orderDate: string; // Changed from date
+  deliveryStatus: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled'; // Changed from status
+  paymentStatus: 'pending' | 'approved' | 'rejected'; // Changed from verified to approved
+  totalAmount: number; // Changed from total
   items: OrderItem[];
   paymentProof?: string;
   rejectionReason?: string;
   trackingNumber?: string;
+  shippingAddress: {
+    street: string;
+    city: string;
+    state?: string;
+    zipCode: string;
+    country: string;
+  };
+  paymentMethod: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 interface OrderTableProps {
   orders: Order[];
   isAdmin?: boolean;
-  onUpdateStatus?: (orderId: string, status: 'verified' | 'rejected', reason?: string) => void;
-  onPaymentProofUpload?: (orderId: string, fileUrl: string) => void;
+  onUpdateStatus?: (orderId: string, newPaymentStatus?: 'approved' | 'rejected', newDeliveryStatus?: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled') => Promise<void>;
+  onPaymentProofUpload?: (orderId: string, file: File) => Promise<void>;
 }
 
-const getStatusClasses = (status: Order['status'] | Order['paymentStatus']) => {
+const getStatusClasses = (status: Order['deliveryStatus'] | Order['paymentStatus']) => {
   switch (status) {
     case 'delivered':
-    case 'verified':
+    case 'approved': // Changed from verified
       return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
     case 'shipped':
       return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200';
@@ -55,10 +80,10 @@ const getStatusClasses = (status: Order['status'] | Order['paymentStatus']) => {
   }
 };
 
-const getStatusIcon = (status: Order['status'] | Order['paymentStatus']) => {
+const getStatusIcon = (status: Order['deliveryStatus'] | Order['paymentStatus']) => {
   switch (status) {
     case 'delivered':
-    case 'verified':
+    case 'approved': // Changed from verified
       return <CheckCircle className="w-4 h-4 mr-1" />;
     case 'shipped':
       return <Truck className="w-4 h-4 mr-1" />;
@@ -81,10 +106,8 @@ const OrderTable: React.FC<OrderTableProps> = ({ orders, isAdmin, onUpdateStatus
     if (!currentOrderId) return;
     const file = e.target.files?.[0];
     if (file) {
-      // For demonstration, create a blob URL. In a real app, upload to a backend.
-      const fileUrl = URL.createObjectURL(file);
       if (onPaymentProofUpload) {
-        onPaymentProofUpload(currentOrderId, fileUrl);
+        onPaymentProofUpload(currentOrderId, file);
       }
     }
     // Reset the file input value to allow uploading the same file again
@@ -120,19 +143,31 @@ const OrderTable: React.FC<OrderTableProps> = ({ orders, isAdmin, onUpdateStatus
                 scope="col"
                 className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider"
               >
-                Date
+                Client Name
               </th>
               <th
                 scope="col"
                 className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider"
               >
-                Status
+                Email
               </th>
               <th
                 scope="col"
                 className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider"
               >
-                Total
+                Order Date
+              </th>
+              <th
+                scope="col"
+                className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider"
+              >
+                Delivery Status
+              </th>
+              <th
+                scope="col"
+                className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider"
+              >
+                Total Amount
               </th>
               <th
                 scope="col"
@@ -166,31 +201,37 @@ const OrderTable: React.FC<OrderTableProps> = ({ orders, isAdmin, onUpdateStatus
             <AnimatePresence>
               {orders.map((order) => (
                 <motion.tr
-                  key={order.id}
+                  key={order._id}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, x: -20 }}
                   transition={{ duration: 0.3 }}
                 >
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
-                    {order.id}
+                    {order._id}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                    {order.clientName}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
-                    {new Date(order.date).toLocaleString()}
+                    {order.clientEmail}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
+                    {new Date(order.orderDate).toLocaleString()}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span
                       className={clsx(
                         'px-2 inline-flex text-xs leading-5 font-semibold rounded-full',
-                        getStatusClasses(order.status)
+                        getStatusClasses(order.deliveryStatus)
                       )}
                     >
-                      {getStatusIcon(order.status)}
-                      {order.status}
+                      {getStatusIcon(order.deliveryStatus)}
+                      {order.deliveryStatus}
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                    {formatCurrency(order.total)}
+                    {formatCurrency(order.totalAmount)}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
                     {order.items.length} item(s)
@@ -202,14 +243,8 @@ const OrderTable: React.FC<OrderTableProps> = ({ orders, isAdmin, onUpdateStatus
                         getStatusClasses(order.paymentStatus)
                       )}
                     >
-                      {order.paymentProof || order.paymentStatus !== 'pending' ? (
-                        <>
-                          {getStatusIcon(order.paymentStatus)}
-                          {order.paymentStatus}
-                        </>
-                      ) : (
-                        '-'
-                      )}
+                      {getStatusIcon(order.paymentStatus)}
+                      {order.paymentStatus}
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
@@ -220,12 +255,12 @@ const OrderTable: React.FC<OrderTableProps> = ({ orders, isAdmin, onUpdateStatus
                         rel="noopener noreferrer"
                         className="text-blue-600 hover:underline dark:text-blue-400 flex items-center"
                       >
-                        <CheckCircle className="w-4 h-4 mr-1 text-green-500" />
+                        <FileText className="w-4 h-4 mr-1 text-gray-500" />
                         View Proof
                       </a>
                     ) : order.paymentStatus === 'pending' && !isAdmin ? (
                       <button
-                        onClick={() => triggerFileUpload(order.id)}
+                        onClick={() => triggerFileUpload(order._id)}
                         className="text-blue-600 hover:underline dark:text-blue-400 flex items-center"
                       >
                         <Upload className="w-4 h-4 mr-1" />
@@ -246,25 +281,32 @@ const OrderTable: React.FC<OrderTableProps> = ({ orders, isAdmin, onUpdateStatus
                         <DropdownMenuContent className="w-48">
                           {order.paymentStatus === 'pending' && (
                             <>
-                              <DropdownMenuItem onClick={() => onUpdateStatus(order.id, 'verified')}>
-                                Verify Payment
+                              <DropdownMenuItem onClick={() => onUpdateStatus(order._id, 'approved')}> {/* Changed to approved */}
+                                Approve Payment
                               </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => onUpdateStatus(order.id, 'rejected')}>
+                              <DropdownMenuItem onClick={() => onUpdateStatus(order._id, 'rejected')}>
                                 Reject Payment
                               </DropdownMenuItem>
                             </>
                           )}
-                          {/* Add more actions as needed based on order status */}
-                          {order.status === 'processing' && (
-                            <DropdownMenuItem onClick={() => alert('Implement ship order')}>
-                              Ship Order
-                            </DropdownMenuItem>
+                          {order.deliveryStatus !== 'delivered' && order.deliveryStatus !== 'cancelled' && (
+                            <>
+                              <DropdownMenuItem onClick={() => onUpdateStatus(order._id, undefined, 'processing')}> {/* Added delivery status update */}
+                                Mark as Processing
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => onUpdateStatus(order._id, undefined, 'shipped')}> {/* Added delivery status update */}
+                                Mark as Shipped
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => onUpdateStatus(order._id, undefined, 'delivered')}> {/* Added delivery status update */}
+                                Mark as Delivered
+                              </DropdownMenuItem>
+                            </>
                           )}
-                          {order.status !== 'cancelled' && order.status !== 'delivered' && (
-                            <DropdownMenuItem onClick={() => alert('Implement cancel order')}>
-                              Cancel Order
-                            </DropdownMenuItem>
-                          )}
+                          <DropdownMenuItem onClick={() => console.log('View Order', order._id)}>
+                            <a href={`/admin/orders/${order._id}`} className="flex items-center w-full">
+                              <Eye className="w-4 h-4 mr-2"/>View Details
+                            </a>
+                          </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </td>

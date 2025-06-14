@@ -12,6 +12,7 @@ import {
   Trash2,
   Plus
 } from 'lucide-react';
+import AdminOrderManagement from './AdminOrderManagement';
 
 const AdminDashboard: React.FC = () => {
   const [activeTab, setActiveTab] = useState('overview');
@@ -267,6 +268,11 @@ const AdminDashboard: React.FC = () => {
           </div>
         )}
 
+        {/* Orders Tab */}
+        {activeTab === 'orders' && (
+          <AdminOrderManagement />
+        )}
+
         {/* Products Tab */}
         {activeTab === 'products' && (
           <motion.div
@@ -358,21 +364,6 @@ const AdminDashboard: React.FC = () => {
         )}
 
         {/* Other tabs content can be added here */}
-        {activeTab === 'orders' && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6"
-          >
-            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6">
-              Orders Management
-            </h2>
-            <p className="text-gray-600 dark:text-gray-400">
-              Orders management interface will be implemented here.
-            </p>
-          </motion.div>
-        )}
-
         {activeTab === 'users' && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}

@@ -8,7 +8,7 @@ interface User {
   name: string;
   email: string;
   role: 'user' | 'admin';
-  avatar?: string;
+  profilePicture?: string;
 }
 
 interface AuthContextType {
@@ -19,6 +19,7 @@ interface AuthContextType {
   register: (name: string, email: string, password: string) => Promise<boolean>;
   logout: () => void;
   updateProfile: (data: Partial<User>) => Promise<boolean>;
+  uploadProfilePicture: (file: File) => Promise<boolean>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -127,6 +128,26 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
+  const uploadProfilePicture = async (file: File): Promise<boolean> => {
+    try {
+      const formData = new FormData();
+      formData.append('profilePicture', file);
+
+      const response = await api.post('/api/auth/profile/picture', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      setUser(response.data.user);
+      toast.success('Profile picture uploaded successfully!');
+      return true;
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Profile picture upload failed.');
+      return false;
+    }
+  };
+
   const value = {
     user,
     loading,
@@ -135,6 +156,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     register,
     logout,
     updateProfile,
+    uploadProfilePicture,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

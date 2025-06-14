@@ -6,6 +6,8 @@ import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 import authRoutes from './src/routes/auth.js';
 import adminRoutes from './src/routes/admin.js';
+import orderRoutes from './src/routes/orders.js';
+import path from 'path';
 
 // ES Module fix for __dirname
 const __filename = fileURLToPath(import.meta.url);
@@ -26,14 +28,18 @@ app.use(cors({
 
 app.use(express.json());
 
+// Serve static files from the 'public' directory
+app.use(express.static(path.join(__dirname, 'public')));
+
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/orders', orderRoutes);
 
 // MongoDB connection with retry logic
 const connectDB = async () => {
   try {
-    const mongoURI = 'mongodb+srv://jnishimwe:M6RIEVzw9iWFaqng@cluster0.tztrg7q.mongodb.net/streamify?retryWrites=true&w=majority&appName=Cluster0';
+    const mongoURI = process.env.MONGO_URI || 'mongodb://localhost:27017/ecommerce'; // Fallback to a local URI
     await mongoose.connect(mongoURI, {
       useNewUrlParser: true,
       useUnifiedTopology: true,
