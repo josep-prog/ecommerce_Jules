@@ -202,8 +202,14 @@ const OrderTable: React.FC<OrderTableProps> = ({ orders, isAdmin, onUpdateStatus
                         getStatusClasses(order.paymentStatus)
                       )}
                     >
-                      {getStatusIcon(order.paymentStatus)}
-                      {order.paymentStatus}
+                      {order.paymentProof || order.paymentStatus !== 'pending' ? (
+                        <>
+                          {getStatusIcon(order.paymentStatus)}
+                          {order.paymentStatus}
+                        </>
+                      ) : (
+                        '-'
+                      )}
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
