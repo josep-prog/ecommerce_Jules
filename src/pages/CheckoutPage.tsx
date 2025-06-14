@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { CreditCard, Truck, Shield, Check } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { CreditCard, Truck, Shield, Check, Upload } from 'lucide-react';
 import { useCart } from '../contexts/CartContext';
 import { useAuth } from '../contexts/AuthContext';
 import toast from 'react-hot-toast';
@@ -9,42 +10,28 @@ import { formatCurrency } from '../utils/currency';
 const CheckoutPage: React.FC = () => {
   const { items, getTotalPrice, clearCart } = useCart();
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
-
-  const [shippingInfo, setShippingInfo] = useState({
-    firstName: user?.name?.split(' ')[0] || '',
-    lastName: user?.name?.split(' ')[1] || '',
-    email: user?.email || '',
-    phone: '',
-    address: '',
-    city: '',
-    state: '',
-    zipCode: '',
-    country: 'US'
-  });
-
-  const [paymentInfo, setPaymentInfo] = useState({
-    method: 'card',
-    cardNumber: '',
-    expiryDate: '',
-    cvv: '',
-    nameOnCard: ''
-  });
-
-  const handleShippingSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setStep(2);
-  };
+  const [paymentProof, setPaymentProof] = useState<File | null>(null);
+  const [orderId] = useState(`ORD-${Date.now().toString().slice(-6)}`);
+  const [paymentCode] = useState(`PAY-${Math.random().toString(36).substring(2, 8).toUpperCase()}`);
 
   const handlePaymentSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
-    // Simulate payment processing
+    if (!paymentProof) {
+      toast.error('Please upload payment proof');
+      setLoading(false);
+      return;
+    }
+
+    // Here you would typically upload the payment proof to your server
+    // and create the order record
     await new Promise(resolve => setTimeout(resolve, 2000));
 
-    toast.success('Order placed successfully!');
+    toast.success('Order placed successfully! Please wait for payment verification.');
     clearCart();
     setStep(3);
     setLoading(false);
@@ -74,7 +61,7 @@ const CheckoutPage: React.FC = () => {
         <div className="mb-8">
           <div className="flex items-center justify-center space-x-8">
             {[
-              { number: 1, title: 'Shipping', icon: Truck },
+              { number: 1, title: 'Order Summary', icon: Truck },
               { number: 2, title: 'Payment', icon: CreditCard },
               { number: 3, title: 'Confirmation', icon: Check }
             ].map((stepItem) => (
@@ -112,121 +99,41 @@ const CheckoutPage: React.FC = () => {
                 className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6"
               >
                 <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
-                  Shipping Information
+                  Order Summary
                 </h2>
-                <form onSubmit={handleShippingSubmit} className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        First Name
-                      </label>
-                      <input
-                        type="text"
-                        required
-                        value={shippingInfo.firstName}
-                        onChange={(e) => setShippingInfo({...shippingInfo, firstName: e.target.value})}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      />
+                <div className="space-y-4">
+                  {items.map((item) => (
+                    <div key={`${item.id}-${item.size}-${item.color}`} className="flex justify-between items-center">
+                      <div className="flex items-center space-x-4">
+                        <img
+                          src={item.image}
+                          alt={item.name}
+                          className="w-16 h-16 object-cover rounded-lg"
+                        />
+                        <div>
+                          <h3 className="font-medium text-gray-900 dark:text-white">{item.name}</h3>
+                          <p className="text-sm text-gray-600 dark:text-gray-400">
+                            {item.size} - {item.color}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-medium text-gray-900 dark:text-white">
+                          {formatCurrency(item.price * item.quantity)}
+                        </p>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                          Qty: {item.quantity}
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Last Name
-                      </label>
-                      <input
-                        type="text"
-                        required
-                        value={shippingInfo.lastName}
-                        onChange={(e) => setShippingInfo({...shippingInfo, lastName: e.target.value})}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      />
-                    </div>
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Email
-                    </label>
-                    <input
-                      type="email"
-                      required
-                      value={shippingInfo.email}
-                      onChange={(e) => setShippingInfo({...shippingInfo, email: e.target.value})}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Phone
-                    </label>
-                    <input
-                      type="tel"
-                      required
-                      value={shippingInfo.phone}
-                      onChange={(e) => setShippingInfo({...shippingInfo, phone: e.target.value})}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Address
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      value={shippingInfo.address}
-                      onChange={(e) => setShippingInfo({...shippingInfo, address: e.target.value})}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        City
-                      </label>
-                      <input
-                        type="text"
-                        required
-                        value={shippingInfo.city}
-                        onChange={(e) => setShippingInfo({...shippingInfo, city: e.target.value})}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        State
-                      </label>
-                      <input
-                        type="text"
-                        required
-                        value={shippingInfo.state}
-                        onChange={(e) => setShippingInfo({...shippingInfo, state: e.target.value})}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        ZIP Code
-                      </label>
-                      <input
-                        type="text"
-                        required
-                        value={shippingInfo.zipCode}
-                        onChange={(e) => setShippingInfo({...shippingInfo, zipCode: e.target.value})}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      />
-                    </div>
-                  </div>
-
-                  <button
-                    type="submit"
-                    className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-4 rounded-lg font-medium transition-colors"
-                  >
-                    Continue to Payment
-                  </button>
-                </form>
+                  ))}
+                </div>
+                <button
+                  onClick={() => setStep(2)}
+                  className="w-full mt-6 bg-blue-600 hover:bg-blue-700 text-white py-3 px-4 rounded-lg font-medium transition-colors"
+                >
+                  Continue to Payment
+                </button>
               </motion.div>
             )}
 
@@ -239,89 +146,63 @@ const CheckoutPage: React.FC = () => {
                 <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
                   Payment Information
                 </h2>
-                <form onSubmit={handlePaymentSubmit} className="space-y-4">
-                  <div className="space-y-3">
-                    <label className="flex items-center">
-                      <input
-                        type="radio"
-                        name="paymentMethod"
-                        value="card"
-                        checked={paymentInfo.method === 'card'}
-                        onChange={(e) => setPaymentInfo({...paymentInfo, method: e.target.value})}
-                        className="h-4 w-4 text-blue-600 focus:ring-blue-500"
-                      />
-                      <span className="ml-2 text-gray-900 dark:text-white">Credit/Debit Card</span>
-                    </label>
-                    <label className="flex items-center">
-                      <input
-                        type="radio"
-                        name="paymentMethod"
-                        value="mtn"
-                        checked={paymentInfo.method === 'mtn'}
-                        onChange={(e) => setPaymentInfo({...paymentInfo, method: e.target.value})}
-                        className="h-4 w-4 text-blue-600 focus:ring-blue-500"
-                      />
-                      <span className="ml-2 text-gray-900 dark:text-white">MTN Mobile Money</span>
-                    </label>
+                <form onSubmit={handlePaymentSubmit} className="space-y-6">
+                  <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+                    <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+                      Payment Code
+                    </h3>
+                    <p className="text-2xl font-bold text-blue-600 dark:text-blue-400 mb-2">
+                      {paymentCode}
+                    </p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      Please use this code when making your payment. You can pay using MTN Mobile Money or any other mobile payment service.
+                    </p>
                   </div>
 
-                  {paymentInfo.method === 'card' && (
-                    <div className="space-y-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                          Card Number
-                        </label>
-                        <input
-                          type="text"
-                          required
-                          placeholder="1234 5678 9012 3456"
-                          value={paymentInfo.cardNumber}
-                          onChange={(e) => setPaymentInfo({...paymentInfo, cardNumber: e.target.value})}
-                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        />
-                      </div>
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            Expiry Date
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Upload Payment Proof
+                    </label>
+                    <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 dark:border-gray-600 border-dashed rounded-lg">
+                      <div className="space-y-1 text-center">
+                        <Upload className="mx-auto h-12 w-12 text-gray-400" />
+                        <div className="flex text-sm text-gray-600 dark:text-gray-400">
+                          <label
+                            htmlFor="file-upload"
+                            className="relative cursor-pointer bg-white dark:bg-gray-800 rounded-md font-medium text-blue-600 hover:text-blue-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-blue-500"
+                          >
+                            <span>Upload a file</span>
+                            <input
+                              id="file-upload"
+                              name="file-upload"
+                              type="file"
+                              accept="image/*,.pdf"
+                              className="sr-only"
+                              onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (file) {
+                                  if (file.size > 5 * 1024 * 1024) {
+                                    toast.error('File size must be less than 5MB');
+                                    return;
+                                  }
+                                  setPaymentProof(file);
+                                }
+                              }}
+                            />
                           </label>
-                          <input
-                            type="text"
-                            required
-                            placeholder="MM/YY"
-                            value={paymentInfo.expiryDate}
-                            onChange={(e) => setPaymentInfo({...paymentInfo, expiryDate: e.target.value})}
-                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                          />
+                          <p className="pl-1">or drag and drop</p>
                         </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            CVV
-                          </label>
-                          <input
-                            type="text"
-                            required
-                            placeholder="123"
-                            value={paymentInfo.cvv}
-                            onChange={(e) => setPaymentInfo({...paymentInfo, cvv: e.target.value})}
-                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                          />
-                        </div>
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                          Name on Card
-                        </label>
-                        <input
-                          type="text"
-                          required
-                          value={paymentInfo.nameOnCard}
-                          onChange={(e) => setPaymentInfo({...paymentInfo, nameOnCard: e.target.value})}
-                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        />
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                          PNG, JPG, PDF up to 5MB
+                        </p>
                       </div>
                     </div>
-                  )}
+                    {paymentProof && (
+                      <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+                        Selected file: {paymentProof.name}
+                      </p>
+                    )}
+                  </div>
 
                   <div className="flex space-x-4">
                     <button
@@ -333,7 +214,7 @@ const CheckoutPage: React.FC = () => {
                     </button>
                     <button
                       type="submit"
-                      disabled={loading}
+                      disabled={loading || !paymentProof}
                       className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-3 px-4 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {loading ? (
@@ -360,19 +241,22 @@ const CheckoutPage: React.FC = () => {
                   <Check className="h-8 w-8 text-green-600 dark:text-green-400" />
                 </div>
                 <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
-                  Order Confirmed!
+                  Order Placed Successfully!
                 </h2>
                 <p className="text-gray-600 dark:text-gray-400 mb-6">
-                  Thank you for your purchase. Your order has been confirmed and will be shipped soon.
+                  Your order has been placed and is pending payment verification. We will notify you once your payment is verified.
                 </p>
                 <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 mb-6">
                   <p className="text-sm text-gray-600 dark:text-gray-400">Order Number</p>
                   <p className="text-lg font-bold text-gray-900 dark:text-white">
-                    #ORD-{Date.now().toString().slice(-6)}
+                    {orderId}
                   </p>
                 </div>
-                <button className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg font-medium transition-colors">
-                  Track Your Order
+                <button
+                  onClick={() => navigate('/dashboard')}
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg font-medium transition-colors"
+                >
+                  View Order Status
                 </button>
               </motion.div>
             )}
