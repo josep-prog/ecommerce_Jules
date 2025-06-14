@@ -63,6 +63,14 @@ const App: React.FC = () => {
 
                       {/* Protected Routes */}
                       <Route
+                        path="/dashboard"
+                        element={
+                          <ProtectedRoute>
+                            <UserDashboard />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
                         path="/cart"
                         element={
                           <ProtectedRoute>

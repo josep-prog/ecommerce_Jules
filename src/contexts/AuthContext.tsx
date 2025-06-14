@@ -78,7 +78,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       if (user.role === 'admin') {
         navigate('/admin');
       } else {
-        navigate('/');
+        navigate('/dashboard');
       }
       
       return true;
