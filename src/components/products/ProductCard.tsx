@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { Star, Heart, ShoppingCart, Eye } from 'lucide-react';
 import { useCart } from '../../contexts/CartContext';
 import toast from 'react-hot-toast';
+import { formatCurrency } from '../../utils/currency';
 
 interface Product {
   id: string;
@@ -58,8 +59,8 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, viewMode }) => {
         whileHover={{ y: -2 }}
         className="bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden flex"
       >
-        <Link to={`/products/${product.id}`} className="flex w-full">
-          <div className="relative w-48 h-48 flex-shrink-0">
+        <div className="flex w-full">
+          <Link to={`/products/${product.id}`} className="relative w-48 h-48 flex-shrink-0">
             <img
               src={product.image}
               alt={product.name}
@@ -75,7 +76,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, viewMode }) => {
                 Sale
               </span>
             )}
-          </div>
+          </Link>
 
           <div className="flex-1 p-6 flex flex-col justify-between">
             <div>
@@ -95,9 +96,11 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, viewMode }) => {
                 </button>
               </div>
 
-              <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-                {product.name}
-              </h3>
+              <Link to={`/products/${product.id}`} className="block">
+                <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2 hover:text-blue-600 dark:hover:text-blue-400">
+                  {product.name}
+                </h3>
+              </Link>
 
               <div className="flex items-center space-x-2 mb-3">
                 <div className="flex items-center">
@@ -161,11 +164,11 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, viewMode }) => {
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
                 <span className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                  ${product.price}
+                  {formatCurrency(product.price)}
                 </span>
                 {product.originalPrice && (
                   <span className="text-lg text-gray-500 line-through">
-                    ${product.originalPrice}
+                    {formatCurrency(product.originalPrice)}
                   </span>
                 )}
               </div>
@@ -188,7 +191,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, viewMode }) => {
               </div>
             </div>
           </div>
-        </Link>
+        </div>
       </motion.div>
     );
   }
@@ -288,11 +291,11 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, viewMode }) => {
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
               <span className="text-xl font-bold text-blue-600 dark:text-blue-400">
-                ${product.price}
+                {formatCurrency(product.price)}
               </span>
               {product.originalPrice && (
                 <span className="text-sm text-gray-500 line-through">
-                  ${product.originalPrice}
+                  {formatCurrency(product.originalPrice)}
                 </span>
               )}
             </div>

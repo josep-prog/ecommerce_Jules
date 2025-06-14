@@ -2,6 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { ArrowRight, Star, ShoppingBag, Users, Award } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { formatCurrency } from '../utils/currency';
 
 const HomePage: React.FC = () => {
   const featuredProducts = [
@@ -240,7 +241,7 @@ const HomePage: React.FC = () => {
                     </h3>
                     <div className="flex items-center justify-between">
                       <span className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                        ${product.price}
+                        {formatCurrency(product.price)}
                       </span>
                       <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors duration-200">
                         Add to Cart

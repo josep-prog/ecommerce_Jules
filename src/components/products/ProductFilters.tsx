@@ -1,20 +1,25 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { X, Star } from 'lucide-react';
+import { formatCurrency } from '../../utils/currency';
 
-interface FilterProps {
-  filters: {
-    category: string;
-    priceRange: number[];
-    sizes: string[];
-    colors: string[];
-    rating: number;
-    inStock: boolean;
-  };
-  setFilters: React.Dispatch<React.SetStateAction<any>>;
+interface FilterState {
+  priceRange: number[];
+  categories: string[];
+  rating: number;
+  colors: string[];
+  category: string;
+  sizes: string[];
+  inStock: boolean;
 }
 
-const ProductFilters: React.FC<FilterProps> = ({ filters, setFilters }) => {
+interface FilterProps {
+  filters: FilterState;
+  setFilters: React.Dispatch<React.SetStateAction<FilterState>>;
+  onClose: () => void;
+}
+
+const ProductFilters: React.FC<FilterProps> = ({ filters, setFilters, onClose }) => {
   const categories = [
     { value: '', label: 'All Categories' },
     { value: 'men', label: 'Men\'s Fashion' },
@@ -54,15 +59,44 @@ const ProductFilters: React.FC<FilterProps> = ({ filters, setFilters }) => {
     }));
   };
 
-  const clearAllFilters = () => {
-    setFilters({
-      category: '',
-      priceRange: [0, 200],
-      sizes: [],
-      colors: [],
+  const handleClearFilters = () => {
+    setFilters((prev: FilterState) => ({
+      ...prev,
+      priceRange: [0, 1000],
+      categories: [],
       rating: 0,
-      inStock: false,
-    });
+      colors: [],
+    }));
+  };
+
+  const handlePriceChange = (value: number[]) => {
+    setFilters((prev: any) => ({
+      ...prev,
+      priceRange: value,
+    }));
+  };
+
+  const handleCategoryChange = (category: string) => {
+    setFilters((prev: any) => ({
+      ...prev,
+      category: category,
+    }));
+  };
+
+  const handleRatingChange = (rating: number) => {
+    setFilters((prev: any) => ({
+      ...prev,
+      rating: rating,
+    }));
+  };
+
+  const handleColorChange = (color: string) => {
+    setFilters((prev: any) => ({
+      ...prev,
+      colors: prev.colors.includes(color)
+        ? prev.colors.filter((c: string) => c !== color)
+        : [...prev.colors, color],
+    }));
   };
 
   return (
@@ -76,7 +110,7 @@ const ProductFilters: React.FC<FilterProps> = ({ filters, setFilters }) => {
           Filters
         </h3>
         <button
-          onClick={clearAllFilters}
+          onClick={handleClearFilters}
           className="text-sm text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
         >
           Clear All
@@ -97,7 +131,7 @@ const ProductFilters: React.FC<FilterProps> = ({ filters, setFilters }) => {
                 value={category.value}
                 checked={filters.category === category.value}
                 onChange={(e) =>
-                  setFilters(prev => ({ ...prev, category: e.target.value }))
+                  handleCategoryChange(e.target.value)
                 }
                 className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 dark:border-gray-600"
               />
@@ -121,16 +155,13 @@ const ProductFilters: React.FC<FilterProps> = ({ filters, setFilters }) => {
             max="200"
             value={filters.priceRange[1]}
             onChange={(e) =>
-              setFilters(prev => ({
-                ...prev,
-                priceRange: [0, parseInt(e.target.value)],
-              }))
+              handlePriceChange([0, parseInt(e.target.value)])
             }
             className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
           />
           <div className="flex justify-between text-sm text-gray-600 dark:text-gray-400">
-            <span>$0</span>
-            <span>${filters.priceRange[1]}</span>
+            <span>{formatCurrency(0)}</span>
+            <span>{formatCurrency(filters.priceRange[1])}</span>
           </div>
         </div>
       </div>
@@ -166,7 +197,7 @@ const ProductFilters: React.FC<FilterProps> = ({ filters, setFilters }) => {
           {colors.map((color) => (
             <button
               key={color}
-              onClick={() => handleColorToggle(color)}
+              onClick={() => handleColorChange(color)}
               className={`w-10 h-10 rounded-full border-2 ${
                 colorMap[color] || 'bg-gray-300'
               } ${
@@ -194,7 +225,7 @@ const ProductFilters: React.FC<FilterProps> = ({ filters, setFilters }) => {
                 value={rating}
                 checked={filters.rating === rating}
                 onChange={(e) =>
-                  setFilters(prev => ({ ...prev, rating: parseInt(e.target.value) }))
+                  handleRatingChange(parseInt(e.target.value))
                 }
                 className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 dark:border-gray-600"
               />

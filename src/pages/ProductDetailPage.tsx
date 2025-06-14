@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { 
@@ -16,13 +16,33 @@ import {
 } from 'lucide-react';
 import { useCart } from '../contexts/CartContext';
 import toast from 'react-hot-toast';
+import { formatCurrency } from '../utils/currency';
+
+interface Product {
+  id: string;
+  name: string;
+  price: number;
+  originalPrice?: number;
+  image: string;
+  images: string[];
+  category: string;
+  rating: number;
+  reviews: number;
+  colors: string[];
+  sizes: string[];
+  description: string;
+  features: string[];
+  inStock: boolean;
+  stockCount: number;
+}
 
 // Mock product data - replace with API call
-const mockProduct = {
+const mockProduct: Product = {
   id: '1',
   name: 'Premium Cotton T-Shirt',
   price: 29.99,
   originalPrice: 39.99,
+  image: 'https://images.pexels.com/photos/1040945/pexels-photo-1040945.jpeg?auto=compress&cs=tinysrgb&w=800',
   images: [
     'https://images.pexels.com/photos/1040945/pexels-photo-1040945.jpeg?auto=compress&cs=tinysrgb&w=800',
     'https://images.pexels.com/photos/1043474/pexels-photo-1043474.jpeg?auto=compress&cs=tinysrgb&w=800',
@@ -75,7 +95,7 @@ const mockReviews = [
 const ProductDetailPage: React.FC = () => {
   const { id } = useParams();
   const { addItem } = useCart();
-  const [product] = useState(mockProduct);
+  const [product] = useState<Product>(mockProduct);
   const [selectedImage, setSelectedImage] = useState(0);
   const [selectedColor, setSelectedColor] = useState(product.colors[0]);
   const [selectedSize, setSelectedSize] = useState(product.sizes[2]);
@@ -189,16 +209,16 @@ const ProductDetailPage: React.FC = () => {
               </div>
               <div className="flex items-center space-x-3">
                 <span className="text-3xl font-bold text-blue-600 dark:text-blue-400">
-                  ${product.price}
+                  {formatCurrency(product.price)}
                 </span>
                 {product.originalPrice && (
-                  <span className="text-xl text-gray-500 line-through">
-                    ${product.originalPrice}
+                  <span className="text-xl text-gray-500 line-through ml-2">
+                    {formatCurrency(product.originalPrice)}
                   </span>
                 )}
                 {product.originalPrice && (
-                  <span className="bg-red-100 text-red-800 text-sm px-2 py-1 rounded">
-                    Save ${(product.originalPrice - product.price).toFixed(2)}
+                  <span className="text-sm text-green-600 ml-2">
+                    Save {formatCurrency(product.originalPrice - product.price)}
                   </span>
                 )}
               </div>

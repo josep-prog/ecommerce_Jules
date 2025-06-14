@@ -4,6 +4,10 @@ import { QueryClient, QueryClientProvider } from 'react-query';
 import { Toaster } from 'react-hot-toast';
 import { StreamChat } from 'stream-chat';
 import { Chat } from 'stream-chat-react';
+import { ThemeProvider } from './contexts/ThemeContext';
+import { AuthProvider } from './contexts/AuthContext';
+import { CartProvider } from './contexts/CartContext';
+import ProtectedRoute from './components/auth/ProtectedRoute';
 
 // Components
 import Navbar from './components/layout/Navbar';
@@ -19,11 +23,6 @@ import UserDashboard from './pages/dashboard/UserDashboard';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import ChatPage from './pages/ChatPage';
 
-// Providers
-import { AuthProvider } from './contexts/AuthContext';
-import { CartProvider } from './contexts/CartContext';
-import { ThemeProvider } from './contexts/ThemeContext';
-
 // Initialize Stream Chat
 const chatClient = StreamChat.getInstance(import.meta.env.VITE_STREAM_API_KEY);
 
@@ -37,28 +36,66 @@ const queryClient = new QueryClient({
   },
 });
 
-function App() {
+// Router future flags
+const routerFutureFlags = {
+  v7_startTransition: true,
+  v7_relativeSplatPath: true,
+};
+
+const App: React.FC = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
-        <AuthProvider>
-          <CartProvider>
-            <Chat client={chatClient}>
-              <Router>
+        <Router future={routerFutureFlags}>
+          <AuthProvider>
+            <CartProvider>
+              <Chat client={chatClient}>
                 <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
                   <Navbar />
                   <main className="pt-16">
                     <Routes>
+                      {/* Public Routes */}
                       <Route path="/" element={<HomePage />} />
                       <Route path="/products" element={<ProductsPage />} />
                       <Route path="/products/:id" element={<ProductDetailPage />} />
-                      <Route path="/cart" element={<CartPage />} />
-                      <Route path="/checkout" element={<CheckoutPage />} />
                       <Route path="/login" element={<LoginPage />} />
                       <Route path="/register" element={<RegisterPage />} />
-                      <Route path="/dashboard/*" element={<UserDashboard />} />
-                      <Route path="/admin/*" element={<AdminDashboard />} />
-                      <Route path="/chat" element={<ChatPage />} />
+
+                      {/* Protected Routes */}
+                      <Route
+                        path="/cart"
+                        element={
+                          <ProtectedRoute>
+                            <CartPage />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/checkout"
+                        element={
+                          <ProtectedRoute>
+                            <CheckoutPage />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/chat"
+                        element={
+                          <ProtectedRoute>
+                            <ChatPage />
+                          </ProtectedRoute>
+                        }
+                      />
+
+                      {/* Admin Routes */}
+                      <Route
+                        path="/admin/*"
+                        element={
+                          <ProtectedRoute requireAdmin>
+                            <AdminDashboard />
+                          </ProtectedRoute>
+                        }
+                      />
                     </Routes>
                   </main>
                   <Footer />
@@ -73,13 +110,13 @@ function App() {
                     }}
                   />
                 </div>
-              </Router>
-            </Chat>
-          </CartProvider>
-        </AuthProvider>
+              </Chat>
+            </CartProvider>
+          </AuthProvider>
+        </Router>
       </ThemeProvider>
     </QueryClientProvider>
   );
-}
+};
 
 export default App;

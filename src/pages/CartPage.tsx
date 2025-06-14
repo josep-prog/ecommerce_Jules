@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { Minus, Plus, Trash2, ShoppingBag, ArrowLeft } from 'lucide-react';
 import { useCart } from '../contexts/CartContext';
+import { formatCurrency } from '../utils/currency';
 
 const CartPage: React.FC = () => {
   const { items, updateQuantity, removeItem, getTotalPrice, getTotalItems } = useCart();
@@ -82,7 +83,7 @@ const CartPage: React.FC = () => {
                       {item.size && <span>Size: {item.size}</span>}
                     </div>
                     <p className="text-lg font-bold text-blue-600 dark:text-blue-400 mt-1">
-                      ${item.price}
+                      {formatCurrency(item.price)}
                     </p>
                   </div>
                   <div className="flex items-center space-x-3">
@@ -104,7 +105,7 @@ const CartPage: React.FC = () => {
                   </div>
                   <div className="text-right">
                     <p className="text-lg font-bold text-gray-900 dark:text-white">
-                      ${(item.price * item.quantity).toFixed(2)}
+                      {formatCurrency(item.price * item.quantity)}
                     </p>
                     <button
                       onClick={() => removeItem(item.id, item.size, item.color)}
@@ -133,7 +134,7 @@ const CartPage: React.FC = () => {
               <div className="space-y-4 mb-6">
                 <div className="flex justify-between">
                   <span className="text-gray-600 dark:text-gray-400">Subtotal</span>
-                  <span className="font-medium">${getTotalPrice().toFixed(2)}</span>
+                  <span className="font-medium">{formatCurrency(getTotalPrice())}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600 dark:text-gray-400">Shipping</span>
@@ -141,13 +142,13 @@ const CartPage: React.FC = () => {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600 dark:text-gray-400">Tax</span>
-                  <span className="font-medium">${(getTotalPrice() * 0.1).toFixed(2)}</span>
+                  <span className="font-medium">{formatCurrency(getTotalPrice() * 0.1)}</span>
                 </div>
                 <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
                   <div className="flex justify-between">
                     <span className="text-lg font-bold text-gray-900 dark:text-white">Total</span>
                     <span className="text-lg font-bold text-gray-900 dark:text-white">
-                      ${(getTotalPrice() * 1.1).toFixed(2)}
+                      {formatCurrency(getTotalPrice() * 1.1)}
                     </span>
                   </div>
                 </div>
